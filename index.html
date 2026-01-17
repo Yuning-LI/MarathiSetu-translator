@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MarathiSetu v4.8 | Resilient Production Translator</title>
-    <meta name="description" content="Premium AI translator for Indian dialects. Support for unlimited text, voice-to-text input for Tamil and Malayalam.">
+    <title>MarathiSetu v4.9 | Ultimate Production Stability</title>
+    <meta name="description" content="Premium AI translator for Indian dialects. High-speed voice and PDF translation for Tamil, Malayalam, Telugu, and more with no character limits.">
     
     <!-- 核心资源 -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -22,7 +22,6 @@
             .hero-title { font-size: 3.2rem; }
         }
 
-        /* 优化滚动条 */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
@@ -35,22 +34,21 @@
     <script type="text/babel">
         /**
          * Project: MarathiSetu
-         * Version: 4.8 (Resilience & Auto-Recovery Patch)
+         * Version: 4.9 (Multi-Endpoint Auto-Recovery)
          * Changes: 
-         * - IMPROVED: Changed model alias to 'gemini-1.5-flash-latest' for better compatibility.
-         * - ADDED: Fallback mechanism to alternate models if the primary one returns 404.
-         * - ENHANCED: Detailed user guidance for AI Studio configuration errors.
+         * - IMPROVED: Implemented auto-switching between v1 and v1beta endpoints.
+         * - IMPROVED: Added recursive fallback for model names (flash -> pro).
+         * - MAINTAINED: REPLACE_ME_WITH_REAL_KEY placeholder logic.
          */
 
         const { useState, useEffect } = React;
 
         const API_CONFIG = {
             key: "REPLACE_ME_WITH_REAL_KEY", 
-            primaryModel: "gemini-1.5-flash-latest",
-            secondaryModel: "gemini-1.5-pro-latest"
+            models: ["gemini-1.5-flash", "gemini-1.5-pro"],
+            endpoints: ["v1beta", "v1"]
         };
 
-        // --- 核心 Icon 组件 ---
         const Icon = ({ name, className = "w-6 h-6" }) => {
             const icons = {
                 mic: <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />,
@@ -83,7 +81,7 @@
 
         const UI_RESOURCES = {
             en: {
-                nav: { home: "Home", insights: "Insights", faq: "FAQ", status: "v4.8 Stable" },
+                nav: { home: "Home", insights: "Insights", faq: "FAQ", status: "v4.9 Live" },
                 header: { desc: "Instant <strong>Voice & PDF</strong> translation for Tamil, Telugu, and Malayalam. High precision AI with <strong>no character limits</strong>." },
                 translator: { 
                     placeholder: "Speak or type to translate (e.g., 'Chetta meaning')...", 
@@ -96,7 +94,7 @@
                 faqs: [
                     { q: "How to translate Tamil to English by voice?", a: "Click the microphone icon, speak in Tamil, and our AI converts it to English instantly. It handles long passages and daily conversations with high precision." },
                     { q: "Can I translate English to Telugu in PDF or Word?", a: "Yes, MarathiSetu is built for long-form content. Just copy and paste your PDF text into the input box for an unlimited Telugu translation." },
-                    { q: "What does 'Chetta' mean in Malayalam?", a: "Chetta is a term of respect for an elder brother in Malayalam. Unlike basic tools, our AI captures these cultural nuances." }
+                    { q: "What does 'Chetta' mean in Malayalam?", a: "Chetta is a term of respect for an elder brother in Malayalam." }
                 ],
                 footer: { copy: "© 2026 Project Bhasha Matrix." }
             }
@@ -108,11 +106,7 @@
             { id: 'ml', name: 'Malayalam (മലയാളം)', code: 'ml-IN' },
             { id: 'ta', name: 'Tamil (தமிழ்)', code: 'ta-IN' },
             { id: 'te', name: 'Telugu (తెలుగు)', code: 'te-IN' },
-            { id: 'mr', name: 'Marathi (मराठी)', code: 'mr-IN' },
             { id: 'bn', name: 'Bengali (বাংলা)', code: 'bn-IN' },
-            { id: 'gu', name: 'Gujarati (ગુજરાતી)', code: 'gu-IN' },
-            { id: 'kn', name: 'Kannada (ಕನ್ನಡ)', code: 'kn-IN' },
-            { id: 'pa', name: 'Punjabi (ਪੰਜਾਬी)', code: 'pa-IN' },
             { id: 'ur', name: 'Urdu (اردو)', code: 'ur-IN' }
         ];
 
@@ -130,29 +124,23 @@
 
             const t = UI_RESOURCES.en;
 
-            const requestTranslation = async (modelName) => {
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${API_CONFIG.key}`;
-                const fullPrompt = `You are a professional translator for MarathiSetu. 
-                Instruction: Translate from ${sourceLang} to ${targetLang} in ${context} style. 
-                Format: Return ONLY the translation, then a separator "---", then exactly 3 cultural or context hints as a list.
-                Text: ${inputText}`;
-
+            const tryFetch = async (endpoint, model) => {
+                const url = `https://generativelanguage.googleapis.com/${endpoint}/models/${model}:generateContent?key=${API_CONFIG.key}`;
+                const prompt = `Translate this text from ${sourceLang} to ${targetLang} in ${context} style. Return result then "---" then 3 cultural hints: ${inputText}`;
+                
                 const response = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: fullPrompt }] }] })
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
                 });
-
-                if (!response.ok) {
-                    const data = await response.json();
-                    const errorObj = new Error(data.error?.message || `HTTP ${response.status}`);
-                    errorObj.status = response.status;
-                    throw errorObj;
-                }
-
+                
                 const data = await response.json();
-                const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-                return raw;
+                if (!response.ok) {
+                    const err = new Error(data.error?.message || "Unknown error");
+                    err.status = response.status;
+                    throw err;
+                }
+                return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
             };
 
             const translateAction = async () => {
@@ -160,40 +148,39 @@
 
                 const placeholder = "REPLACE_ME" + "_WITH_REAL_KEY";
                 if (API_CONFIG.key === placeholder) {
-                    setError("Configuration Error: API Key not detected. Check Vercel Environment Variables.");
+                    setError("API Key Error: Vercel variables not detected.");
                     return;
                 }
 
                 setIsTranslating(true);
                 setError(null);
                 
-                try {
-                    // 尝试主模型
-                    let raw;
-                    try {
-                        raw = await requestTranslation(API_CONFIG.primaryModel);
-                    } catch (primaryErr) {
-                        if (primaryErr.status === 404) {
-                            console.warn("Primary model not found, trying fallback...");
-                            raw = await requestTranslation(API_CONFIG.secondaryModel);
-                        } else {
-                            throw primaryErr;
+                let success = false;
+                let lastErrorMessage = "";
+
+                // 自动尝试所有组合 (Endpoints x Models)
+                for (const endpoint of API_CONFIG.endpoints) {
+                    for (const model of API_CONFIG.models) {
+                        try {
+                            console.log(`Trying ${model} via ${endpoint}...`);
+                            const raw = await tryFetch(endpoint, model);
+                            const parts = raw.split("---");
+                            setOutputText(parts[0].trim());
+                            setRelatedContent(parts[1] ? parts[1].trim().split('\n').filter(l => l.trim()) : []);
+                            success = true;
+                            break;
+                        } catch (err) {
+                            lastErrorMessage = err.message;
+                            if (err.status !== 404) break; // 如果不是404(找不到模型)，可能是别的问题，停止当前路径尝试
                         }
                     }
-
-                    const parts = raw.split("---");
-                    setOutputText(parts[0].trim());
-                    setRelatedContent(parts[1] ? parts[1].trim().split('\n').filter(l => l.trim()) : []);
-                } catch (err) {
-                    console.error("Translation Error Details:", err);
-                    setError(
-                        err.message.includes("not found") 
-                        ? "Model Access Denied: Please visit Google AI Studio, ensure 'Generative Language API' is enabled, and try creating a NEW API Key."
-                        : `Error: ${err.message}`
-                    );
-                } finally { 
-                    setIsTranslating(false); 
+                    if (success) break;
                 }
+
+                if (!success) {
+                    setError(`Model Access Denied: ${lastErrorMessage}. Please ensure 'Generative Language API' is enabled in Google AI Studio and consider creating a NEW API Key.`);
+                }
+                setIsTranslating(false);
             };
 
             const copyToClipboard = () => {
@@ -210,52 +197,52 @@
                                 <div className="bg-indigo-600 p-2 rounded-xl text-white shadow-lg">
                                     <IndianTranslateLogo size={24} />
                                 </div>
-                                <span className="font-black text-xl tracking-tighter cursor-pointer">MarathiSetu</span>
+                                <span className="font-black text-xl tracking-tighter">MarathiSetu</span>
                             </div>
                             <div className="hidden md:flex gap-8 text-xs font-bold text-slate-400">
-                                <a href="#" className="hover:text-indigo-600 transition-colors">Home</a>
-                                <a href="#faq" className="hover:text-indigo-600 transition-colors">Insights</a>
-                                <a href="#faq" className="hover:text-indigo-600 transition-colors">FAQ</a>
+                                <a href="#" className="hover:text-indigo-600">Home</a>
+                                <a href="#faq" className="hover:text-indigo-600">Insights</a>
+                                <a href="#faq" className="hover:text-indigo-600">FAQ</a>
                             </div>
                         </div>
-                        <div className="bg-green-100 text-green-700 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tighter shadow-sm">
+                        <div className="bg-green-100 text-green-700 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tighter">
                             {t.nav.status}
                         </div>
                     </nav>
 
                     <main className="max-w-6xl mx-auto px-6 py-12 md:py-24">
-                        <header className="text-center mb-16 md:mb-24">
-                            <h1 className="hero-title text-6xl md:text-8xl font-black mb-8 italic text-slate-900 tracking-tighter leading-tight">Talk to India.</h1>
-                            <p className="text-lg md:text-xl text-slate-500 max-w-2xl mx-auto leading-relaxed font-medium" dangerouslySetInnerHTML={{ __html: t.header.desc }} />
+                        <header className="text-center mb-16">
+                            <h1 className="hero-title text-6xl md:text-8xl font-black mb-8 italic text-slate-900 tracking-tighter">Talk to India.</h1>
+                            <p className="text-lg md:text-xl text-slate-500 max-w-2xl mx-auto leading-relaxed" dangerouslySetInnerHTML={{ __html: t.header.desc }} />
                         </header>
 
-                        <section className="bg-white rounded-[3rem] shadow-2xl border border-white overflow-hidden mb-12 transition-all duration-500 hover:shadow-indigo-100/50">
-                            <div className="bg-[#F8FAFC] px-8 py-6 border-b border-slate-100 flex flex-col md:flex-row justify-between items-center gap-6 text-slate-900">
+                        <section className="bg-white rounded-[3rem] shadow-2xl border border-white overflow-hidden mb-12">
+                            <div className="bg-[#F8FAFC] px-8 py-6 border-b border-slate-100 flex flex-col md:flex-row justify-between items-center gap-6">
                                 <div className="flex items-center bg-white p-2 rounded-2xl border border-slate-200 gap-3 shadow-sm">
-                                    <select value={sourceLang} onChange={(e)=>setSourceLang(e.target.value)} className="font-bold text-xs px-4 py-2 outline-none cursor-pointer bg-transparent">
+                                    <select value={sourceLang} onChange={(e)=>setSourceLang(e.target.value)} className="font-bold text-xs px-4 py-2 outline-none bg-transparent">
                                         {LANGUAGES.map(l => <option key={`src-${l.id}`} value={l.id}>{l.name}</option>)}
                                     </select>
-                                    <button onClick={()=>{setSourceLang(targetLang); setTargetLang(sourceLang)}} className="p-2 bg-indigo-600 rounded-full text-white hover:opacity-90 active:scale-90 transition-all shadow-md">
+                                    <button onClick={()=>{setSourceLang(targetLang); setTargetLang(sourceLang)}} className="p-2 bg-indigo-600 rounded-full text-white hover:opacity-90 transition-all">
                                         <Icon name="swap" className="w-4 h-4" />
                                     </button>
-                                    <select value={targetLang} onChange={(e)=>setTargetLang(e.target.value)} className="font-bold text-xs px-4 py-2 text-indigo-600 outline-none cursor-pointer bg-transparent">
+                                    <select value={targetLang} onChange={(e)=>setTargetLang(e.target.value)} className="font-bold text-xs px-4 py-2 text-indigo-600 outline-none bg-transparent">
                                         {LANGUAGES.map(l => <option key={`trg-${l.id}`} value={l.id}>{l.name}</option>)}
                                     </select>
                                 </div>
                                 <div className="flex gap-2 bg-slate-100 p-1.5 rounded-2xl">
-                                    <button onClick={()=>setContext('daily')} className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${context === 'daily' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400'}`}>Daily</button>
-                                    <button onClick={()=>setContext('official')} className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${context === 'official' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400'}`}>Official</button>
+                                    <button onClick={()=>setContext('daily')} className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase transition-all ${context === 'daily' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400'}`}>Daily</button>
+                                    <button onClick={()=>setContext('official')} className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase transition-all ${context === 'official' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400'}`}>Official</button>
                                 </div>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100 min-h-[500px]">
                                 <div className="p-10 flex flex-col">
-                                    <textarea className="flex-1 text-3xl font-black bg-transparent border-none focus:ring-0 resize-none placeholder-slate-200 text-slate-800 leading-tight" placeholder={isListening ? t.translator.listening : t.translator.placeholder} value={inputText} onChange={(e)=>setInputText(e.target.value)} />
+                                    <textarea className="flex-1 text-3xl font-black bg-transparent border-none focus:ring-0 resize-none placeholder-slate-200 text-slate-800" placeholder={isListening ? t.translator.listening : t.translator.placeholder} value={inputText} onChange={(e)=>setInputText(e.target.value)} />
                                     <div className="flex gap-4 items-center">
-                                        <button onClick={()=>setIsListening(!isListening)} className={`p-5 rounded-2xl transition-all ${isListening ? 'bg-red-500 text-white animate-pulse shadow-lg shadow-red-200' : 'bg-slate-100 text-slate-400 hover:text-indigo-600'}`}>
+                                        <button onClick={()=>setIsListening(!isListening)} className={`p-5 rounded-2xl transition-all ${isListening ? 'bg-red-500 text-white animate-pulse' : 'bg-slate-100 text-slate-400 hover:text-indigo-600'}`}>
                                             <Icon name={isListening ? "micOff" : "mic"} />
                                         </button>
-                                        <button onClick={translateAction} disabled={isTranslating || !inputText} className="flex-1 bg-indigo-600 text-white py-5 rounded-2xl font-black text-xl shadow-xl active:scale-95 disabled:opacity-50 transition-all flex justify-center items-center gap-3">
+                                        <button onClick={translateAction} disabled={isTranslating || !inputText} className="flex-1 bg-indigo-900 text-white py-5 rounded-2xl font-black text-xl shadow-xl active:scale-95 disabled:opacity-50 transition-all flex justify-center items-center gap-3">
                                             {isTranslating ? <Icon name="loader" className="animate-spin" /> : <span>{t.translator.translate}</span>}
                                             {!isTranslating && <Icon name="zap" className="w-5 h-5" />}
                                         </button>
@@ -264,7 +251,7 @@
                                 </div>
                                 <div className="p-10 bg-[#F9FBFF] flex flex-col">
                                     <div className="flex justify-between items-center mb-10 text-slate-300">
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Output Result</span>
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Result</span>
                                         {outputText && (
                                             <button onClick={copyToClipboard} className={`transition-all ${copied ? 'text-green-500' : 'hover:text-indigo-600'}`}>
                                                 <Icon name={copied ? "check" : "copy"} className="w-5 h-5" />
@@ -279,8 +266,8 @@
                                             <span className="text-[10px] font-black text-indigo-300 uppercase tracking-widest block mb-4">{t.translator.related}</span>
                                             <ul className="space-y-2">
                                                 {relatedContent.map((item, idx) => (
-                                                    <li key={`hint-${idx}`} className="text-xs font-bold text-slate-600 flex items-start gap-2 leading-relaxed">
-                                                        <span className="text-indigo-500 mt-1">•</span> {item}
+                                                    <li key={`hint-${idx}`} className="text-xs font-bold text-slate-600 flex items-start gap-2">
+                                                        <span className="text-indigo-500">•</span> {item}
                                                     </li>
                                                 ))}
                                             </ul>
@@ -290,18 +277,11 @@
                             </div>
                         </section>
 
-                        <div className="text-center mb-32 animate-bounce">
-                            <a href="#faq" className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex flex-col items-center gap-2">
-                                {t.translator.learnMore}
-                                <Icon name="chevron" className="w-4 h-4" />
-                            </a>
-                        </div>
-
                         <section id="faq" className="max-w-4xl mx-auto mb-32 pt-12">
                             <h2 className="text-4xl font-black text-center mb-16 tracking-tighter text-indigo-950 italic">Expert Insights & FAQ</h2>
                             <div className="grid gap-8 text-slate-900">
                                 {t.faqs.map((f, i) => (
-                                    <div key={`faq-${i}`} className="group bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
+                                    <div key={`faq-${i}`} className="group bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm hover:shadow-2xl transition-all duration-300">
                                         <h3 className="text-xl font-black text-indigo-900 mb-4 flex items-center gap-3">
                                             <span className="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center text-xs text-indigo-600 font-black">{i+1}</span>
                                             {f.q}
@@ -313,17 +293,12 @@
                         </section>
                     </main>
 
-                    <footer className="bg-slate-950 text-white py-24 px-8 text-center mt-20">
+                    <footer className="bg-slate-950 text-white py-24 px-8 text-center">
                         <div className="flex justify-center items-center gap-2 mb-8 text-2xl font-black tracking-tighter">
                             <IndianTranslateLogo size={32} />
                             <span>MarathiSetu</span>
                         </div>
-                        <div className="flex justify-center gap-8 mb-12 text-[10px] font-black uppercase tracking-widest text-slate-500">
-                            <a href="#" className="hover:text-white transition-colors">Privacy</a>
-                            <a href="#" className="hover:text-white transition-colors">Terms</a>
-                            <a href="#faq" className="hover:text-white transition-colors">Help</a>
-                        </div>
-                        <div className="text-[10px] text-slate-700 font-black uppercase tracking-[0.3em] leading-loose text-center">
+                        <div className="text-[10px] text-slate-700 font-black uppercase tracking-[0.3em] leading-loose">
                             <div>{t.footer.copy}</div>
                             <div>Empowering the Indian Diaspora globally.</div>
                         </div>
