@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MarathiSetu v3.7 | Secure Production Translator</title>
+    <title>MarathiSetu v3.8 | Secure Production Translator</title>
     <meta name="description" content="Premium AI translator for Indian dialects. High-speed voice and PDF translation for Tamil, Malayalam, Telugu, and more with no character limits.">
     
     <!-- 核心资源 -->
@@ -35,10 +35,10 @@
     <script type="text/babel">
         /**
          * Project: MarathiSetu
-         * Version: 3.7 (Vercel Deployment Fix)
+         * Version: 3.8 (Robust Deployment Patch)
          * Changes: 
-         * - Retained REPLACE_ME_WITH_REAL_KEY placeholder.
-         * - Updated deployment instructions to use a 'public' folder strategy for Vercel.
+         * - Refined placeholders and instructions for Vercel.
+         * - Improved build command for characters compatibility.
          */
 
         const { useState, useEffect } = React;
@@ -47,7 +47,7 @@
         const API_CONFIG = {
             // 安全提示：代码库中使用占位符。
             // 建议 Vercel Build Command 使用: 
-            // mkdir -p public && sed "s/REPLACE_ME_WITH_REAL_KEY/$GEMINI_API_KEY/g" index.html > public/index.html
+            // mkdir -p public && cp index.html public/index.html && sed -i "s|REPLACE_ME_WITH_REAL_KEY|$GEMINI_API_KEY|g" public/index.html
             key: "REPLACE_ME_WITH_REAL_KEY", 
             model: "gemini-2.5-flash-preview-09-2025"
         };
@@ -94,7 +94,7 @@
 
         const UI_RESOURCES = {
             en: {
-                nav: { home: "Home", insights: "Insights", faq: "FAQ", status: "v3.7 Secure" },
+                nav: { home: "Home", insights: "Insights", faq: "FAQ", status: "v3.8 Secure" },
                 header: { desc: "Instant <strong>Voice & PDF</strong> translation for Tamil, Telugu, and Malayalam. High precision AI with <strong>no character limits</strong>." },
                 translator: { 
                     placeholder: "Speak or type to translate (e.g., 'Chetta meaning')...", 
