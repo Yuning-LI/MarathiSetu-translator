@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MarathiSetu v4.1 | Stable Production Translator</title>
-    <meta name="description" content="Premium AI translator for Indian dialects. High-speed voice and PDF translation for Tamil, Malayalam, Telugu, and more with no character limits.">
+    <title>MarathiSetu v4.3 | Stable Global Translator</title>
+    <meta name="description" content="Premium AI translator for Indian dialects. Support for unlimited text, voice-to-text input for Tamil and Malayalam.">
     
     <!-- 核心资源 -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -22,7 +22,7 @@
             .hero-title { font-size: 3.2rem; }
         }
 
-        /* 隐藏原生滚动条并优化显示 */
+        /* 优化滚动条 */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
@@ -35,20 +35,18 @@
     <script type="text/babel">
         /**
          * Project: MarathiSetu
-         * Version: 4.1 (API Endpoint Fix)
+         * Version: 4.3 (Syntax & Logic Resilience)
          * Changes: 
-         * - FIXED: Changed API endpoint from v1beta to v1 to resolve 404 (Model Not Found) errors.
-         * - IMPROVED: Refined error message extraction for faster debugging.
-         * - MAINTAINED: REPLACE_ME_WITH_REAL_KEY placeholder logic.
+         * - FIXED: Resolved Babel SyntaxError in the footer section.
+         * - RESTORED: Full 11-language array and multi-lingual UI resources.
+         * - OPTIMIZED: Refined API payload with 'system_instruction'.
          */
 
         const { useState, useEffect } = React;
 
-        // --- 生产环境 API 配置 ---
         const API_CONFIG = {
             // 安全提示：代码库中使用占位符。
-            // Vercel Build Command: 
-            // mkdir -p public && cp index.html public/index.html && sed -i "s|REPLACE_ME_WITH_REAL_KEY|$GEMINI_API_KEY|g" public/index.html
+            // Vercel Build Command: mkdir -p public && cp index.html public/index.html && sed -i "s|REPLACE_ME_WITH_REAL_KEY|$GEMINI_API_KEY|g" public/index.html
             key: "REPLACE_ME_WITH_REAL_KEY", 
             model: "gemini-1.5-flash" 
         };
@@ -70,17 +68,8 @@
                 chevron: <path d="m6 9 6 6 6-6" />,
                 loader: <path d="M21 12a9 9 0 1 1-6.219-8.56" />
             };
-
             return (
-                <svg 
-                    viewBox="0 0 24 24" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    strokeWidth="2.5" 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    className={`${className} transition-all`}
-                >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={`${className} transition-all`}>
                     {icons[name]}
                 </svg>
             );
@@ -95,7 +84,7 @@
 
         const UI_RESOURCES = {
             en: {
-                nav: { home: "Home", insights: "Insights", faq: "FAQ", status: "v4.1 Live" },
+                nav: { home: "Home", insights: "Insights", faq: "FAQ", status: "v4.3 Live" },
                 header: { desc: "Instant <strong>Voice & PDF</strong> translation for Tamil, Telugu, and Malayalam. High precision AI with <strong>no character limits</strong>." },
                 translator: { 
                     placeholder: "Speak or type to translate (e.g., 'Chetta meaning')...", 
@@ -112,6 +101,25 @@
                     { q: "Is there a character limit for translations?", a: "No. MarathiSetu supports long-form content, making it perfect for translating documents and books without restrictions." }
                 ],
                 footer: { copy: "© 2026 Project Bhasha Matrix. Data-driven Voice AI." }
+            },
+            hi: {
+                nav: { home: "होम", insights: "इनसाइट्स", faq: "FAQ", status: "v4.3 लाइव" },
+                header: { desc: "तमिल, तेलुगु और मलयालम के लिए त्वरित <strong>आवाज और PDF</strong> अनुवाद। बिना किसी वर्ण सीमा के उच्च सटीकता वाला AI।" },
+                translator: { 
+                    placeholder: "बोलें या टाइप करें...", 
+                    listening: "सुन रहा हूँ...",
+                    translate: "अभी अनुवाद करें", 
+                    result: "अनुवाद",
+                    related: "स्थानीय संदर्भ",
+                    learnMore: "विशेषज्ञ जानकारी और FAQ"
+                },
+                faqs: [
+                    { q: "आवाज द्वारा तमिल अनुवाद कैसे करें?", a: "माइक्रोफोन पर क्लिक करें, तमिल में बोलें, और हमारा AI इसे तुरंत अंग्रेजी में बदल देगा।" },
+                    { q: "क्या मैं PDF अनुवाद कर सकता हूँ?", a: "हाँ, असीमित अनुवाद के लिए बस अपना PDF टेक्स्ट कॉपी करें।" },
+                    { q: " 'Chetta' का क्या अर्थ है?", a: "मलयालम में बड़े भाई के लिए सम्मान का शब्द।" },
+                    { q: "क्या अनुवाद की कोई सीमा है?", a: "नहीं, यह असीमित पाठ का समर्थन करता है।" }
+                ],
+                footer: { copy: "© 2026 प्रोजेक्ट भाषा मैट्रिक्स। डेटा-संचालित वॉयस AI।" }
             }
         };
 
@@ -130,6 +138,7 @@
         ];
 
         const App = () => {
+            const [uiLang, setUiLang] = useState('en');
             const [sourceLang, setSourceLang] = useState('en');
             const [targetLang, setTargetLang] = useState('ml');
             const [inputText, setInputText] = useState("");
@@ -141,13 +150,13 @@
             const [error, setError] = useState(null);
             const [copied, setCopied] = useState(false);
 
-            const t = UI_RESOURCES.en;
+            const t = UI_RESOURCES[uiLang] || UI_RESOURCES.en;
 
             const translateAction = async () => {
                 if (!inputText.trim()) return;
 
-                const placeholder = "REPLACE_ME" + "_WITH_REAL_KEY";
-                if (API_CONFIG.key === placeholder) {
+                const placeholderString = "REPLACE_ME" + "_WITH_REAL_KEY";
+                if (API_CONFIG.key === placeholderString) {
                     setError("Configuration Error: API Key placeholder detected. Ensure Vercel build command is correctly set.");
                     return;
                 }
@@ -156,26 +165,22 @@
                 setError(null);
                 
                 try {
-                    // 修正点：将 v1beta 改为 v1
                     const url = `https://generativelanguage.googleapis.com/v1/models/${API_CONFIG.model}:generateContent?key=${API_CONFIG.key}`;
                     const response = await fetch(url, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             contents: [{ parts: [{ text: inputText }] }],
-                            systemInstruction: { parts: [{ text: `Translate from ${sourceLang} to ${targetLang} in ${context} style. Return translation, then "---", then 3 culture hints.` }] }
+                            system_instruction: { 
+                                parts: [{ text: `Translate from ${sourceLang} to ${targetLang} in ${context} style. Return translation, then "---", then 3 culture hints.` }] 
+                            }
                         })
                     });
-                    
                     const data = await response.json();
-                    
                     if (!response.ok) {
-                        // 提取更详细的错误原因
                         const errorMsg = data.error?.message || `Status: ${response.status}`;
-                        const errorReason = data.error?.status || "Unknown";
-                        throw new Error(`${errorMsg} (${errorReason})`);
+                        throw new Error(`${errorMsg}`);
                     }
-                    
                     const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
                     const parts = raw.split("---");
                     setOutputText(parts[0].trim());
@@ -205,19 +210,25 @@
                                 <span className="font-black text-xl tracking-tighter cursor-pointer">MarathiSetu</span>
                             </div>
                             <div className="hidden md:flex gap-8 text-xs font-bold text-slate-400">
-                                <a href="#" className="hover:text-indigo-600 transition-colors">Home</a>
-                                <a href="#faq" className="hover:text-indigo-600 transition-colors">Insights</a>
-                                <a href="#faq" className="hover:text-indigo-600 transition-colors">FAQ</a>
+                                <a href="#" className="hover:text-indigo-600 transition-colors">{t.nav.home}</a>
+                                <a href="#faq" className="hover:text-indigo-600 transition-colors">{t.nav.insights}</a>
+                                <a href="#faq" className="hover:text-indigo-600 transition-colors">{t.nav.faq}</a>
                             </div>
                         </div>
-                        <div className="bg-green-100 text-green-700 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tighter shadow-sm">
-                            {t.nav.status}
+                        <div className="flex items-center gap-4">
+                            <div className="bg-green-100 text-green-700 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tighter shadow-sm">
+                                {t.nav.status}
+                            </div>
+                            <select value={uiLang} onChange={(e)=>setUiLang(e.target.value)} className="text-[10px] font-bold uppercase bg-transparent border-none outline-none cursor-pointer">
+                                <option value="en">EN</option>
+                                <option value="hi">HI</option>
+                            </select>
                         </div>
                     </nav>
 
                     <main className="max-w-6xl mx-auto px-6 py-12 md:py-24">
                         <header className="text-center mb-16 md:mb-24">
-                            <h1 className="hero-title text-6xl md:text-8xl font-black mb-8 italic text-slate-900 tracking-tighter leading-tight text-center">Talk to India.</h1>
+                            <h1 className="hero-title text-6xl md:text-8xl font-black mb-8 italic text-slate-900 tracking-tighter leading-tight">Talk to India.</h1>
                             <p className="text-lg md:text-xl text-slate-500 max-w-2xl mx-auto leading-relaxed font-medium" dangerouslySetInnerHTML={{ __html: t.header.desc }} />
                         </header>
 
@@ -227,10 +238,7 @@
                                     <select value={sourceLang} onChange={(e)=>setSourceLang(e.target.value)} className="font-bold text-xs px-4 py-2 outline-none cursor-pointer bg-transparent">
                                         {LANGUAGES.map(l => <option key={`src-${l.id}`} value={l.id}>{l.name}</option>)}
                                     </select>
-                                    <button 
-                                        onClick={()=>{setSourceLang(targetLang); setTargetLang(sourceLang)}} 
-                                        className="p-2 bg-indigo-600 rounded-full text-white hover:opacity-90 active:scale-90 transition-all shadow-md"
-                                    >
+                                    <button onClick={()=>{setSourceLang(targetLang); setTargetLang(sourceLang)}} className="p-2 bg-indigo-600 rounded-full text-white hover:opacity-90 active:scale-90 transition-all shadow-md">
                                         <Icon name="swap" className="w-4 h-4" />
                                     </button>
                                     <select value={targetLang} onChange={(e)=>setTargetLang(e.target.value)} className="font-bold text-xs px-4 py-2 text-indigo-600 outline-none cursor-pointer bg-transparent">
@@ -245,33 +253,17 @@
 
                             <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100 min-h-[500px]">
                                 <div className="p-10 flex flex-col">
-                                    <textarea 
-                                        className="flex-1 text-3xl font-black bg-transparent border-none focus:ring-0 resize-none placeholder-slate-200 text-slate-800 leading-tight" 
-                                        placeholder={isListening ? t.translator.listening : t.translator.placeholder} 
-                                        value={inputText} 
-                                        onChange={(e)=>setInputText(e.target.value)} 
-                                    />
+                                    <textarea className="flex-1 text-3xl font-black bg-transparent border-none focus:ring-0 resize-none placeholder-slate-200 text-slate-800 leading-tight" placeholder={isListening ? t.translator.listening : t.translator.placeholder} value={inputText} onChange={(e)=>setInputText(e.target.value)} />
                                     <div className="flex gap-4 items-center">
-                                        <button 
-                                            onClick={()=>setIsListening(!isListening)} 
-                                            className={`p-5 rounded-2xl transition-all ${isListening ? 'bg-red-500 text-white animate-pulse shadow-lg shadow-red-200' : 'bg-slate-100 text-slate-400 hover:text-indigo-600'}`}
-                                        >
+                                        <button onClick={()=>setIsListening(!isListening)} className={`p-5 rounded-2xl transition-all ${isListening ? 'bg-red-500 text-white animate-pulse shadow-lg shadow-red-200' : 'bg-slate-100 text-slate-400 hover:text-indigo-600'}`}>
                                             <Icon name={isListening ? "micOff" : "mic"} />
                                         </button>
-                                        <button 
-                                            onClick={translateAction} 
-                                            disabled={isTranslating || !inputText} 
-                                            className="flex-1 bg-indigo-600 text-white py-5 rounded-2xl font-black text-xl shadow-xl active:scale-95 disabled:opacity-50 transition-all flex justify-center items-center gap-3"
-                                        >
+                                        <button onClick={translateAction} disabled={isTranslating || !inputText} className="flex-1 bg-indigo-600 text-white py-5 rounded-2xl font-black text-xl shadow-xl active:scale-95 disabled:opacity-50 transition-all flex justify-center items-center gap-3">
                                             {isTranslating ? <Icon name="loader" className="animate-spin" /> : <span>{t.translator.translate}</span>}
                                             {!isTranslating && <Icon name="zap" className="w-5 h-5" />}
                                         </button>
                                     </div>
-                                    {error && (
-                                        <div className="mt-4 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 text-[10px] font-bold uppercase tracking-widest leading-relaxed">
-                                            {error}
-                                        </div>
-                                    )}
+                                    {error && <div className="mt-4 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 text-[10px] font-bold uppercase tracking-widest leading-relaxed">{error}</div>}
                                 </div>
                                 <div className="p-10 bg-[#F9FBFF] flex flex-col">
                                     <div className="flex justify-between items-center mb-10 text-slate-300">
@@ -312,7 +304,7 @@
                             <h2 className="text-4xl font-black text-center mb-16 tracking-tighter text-indigo-950 italic">Expert Insights & FAQ</h2>
                             <div className="grid gap-8 text-slate-900">
                                 {t.faqs.map((f, i) => (
-                                    <div key={i} className="group bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
+                                    <div key={`faq-${i}`} className="group bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
                                         <h3 className="text-xl font-black text-indigo-900 mb-4 flex items-center gap-3">
                                             <span className="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center text-xs text-indigo-600 font-black">{i+1}</span>
                                             {f.q}
@@ -334,10 +326,10 @@
                             <a href="#" className="hover:text-white transition-colors">Terms</a>
                             <a href="#faq" className="hover:text-white transition-colors">Help</a>
                         </div>
-                        <p className="text-[10px] text-slate-700 font-black uppercase tracking-[0.3em] leading-loose">
-                            {t.footer.copy}<br/>
-                            Empowering the Indian Diaspora globally.
-                        </p>
+                        <div className="text-[10px] text-slate-700 font-black uppercase tracking-[0.3em] leading-loose">
+                            <div>{t.footer.copy}</div>
+                            <div>Empowering the Indian Diaspora globally.</div>
+                        </div>
                     </footer>
                 </div>
             );
