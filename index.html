@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MarathiSetu v3.4 | Professional Global Translator</title>
+    <title>MarathiSetu v3.6 | Secure Production Translator</title>
     <meta name="description" content="Premium AI translator for Indian dialects. High-speed voice and PDF translation for Tamil, Malayalam, Telugu, and more with no character limits.">
     
     <!-- 核心资源 -->
@@ -35,22 +35,22 @@
     <script type="text/babel">
         /**
          * Project: MarathiSetu
-         * Version: 3.4 (Stable Release Candidate)
-         * Optimization: 
-         * - Pure SVG Icons (Zero external dependency issues)
-         * - Full 11-Language Matrix
-         * - Enhanced SEO FAQ Structure
+         * Version: 3.6 (Security & CI/CD Optimization)
+         * Changes: 
+         * - Moved API Key to a build-time placeholder for Vercel Environment Variables.
+         * - Enhanced the error fallback UI.
          */
 
         const { useState, useEffect } = React;
 
         // --- 生产环境 API 配置 ---
         const API_CONFIG = {
-            key: "", // 部署时填入您的 API Key
+            // 安全提示：代码库中使用占位符，由 Vercel 构建脚本在部署时自动替换
+            key: "REPLACE_ME_WITH_REAL_KEY", 
             model: "gemini-2.5-flash-preview-09-2025"
         };
 
-        // --- 核心 Icon 组件 (无 Bug 渲染) ---
+        // --- 核心 Icon 组件 ---
         const Icon = ({ name, className = "w-6 h-6" }) => {
             const icons = {
                 mic: <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />,
@@ -92,7 +92,7 @@
 
         const UI_RESOURCES = {
             en: {
-                nav: { home: "Home", insights: "Insights", faq: "FAQ", status: "v3.4 Stable" },
+                nav: { home: "Home", insights: "Insights", faq: "FAQ", status: "v3.6 Secure" },
                 header: { desc: "Instant <strong>Voice & PDF</strong> translation for Tamil, Telugu, and Malayalam. High precision AI with <strong>no character limits</strong>." },
                 translator: { 
                     placeholder: "Speak or type to translate (e.g., 'Chetta meaning')...", 
@@ -142,6 +142,13 @@
 
             const translateAction = async () => {
                 if (!inputText.trim()) return;
+
+                // 检查是否由于配置错误导致占位符未被替换
+                if (API_CONFIG.key === "REPLACE_ME_WITH_REAL_KEY") {
+                    setError("Security Error: API Key placeholder detected. Please check your Vercel Build Command settings.");
+                    return;
+                }
+
                 setIsTranslating(true);
                 setError(null);
                 
@@ -155,14 +162,17 @@
                         })
                     });
                     const data = await response.json();
-                    if (data.error) throw new Error(data.error.message);
+                    
+                    if (data.error) {
+                        throw new Error(data.error.message);
+                    }
                     
                     const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
                     const parts = raw.split("---");
                     setOutputText(parts[0].trim());
                     setRelatedContent(parts[1] ? parts[1].trim().split('\n') : []);
                 } catch (err) {
-                    setError("API connection issue. Please verify your Key.");
+                    setError("API connection issue. Please verify your Key or check your internet connection.");
                 } finally { 
                     setIsTranslating(false); 
                 }
@@ -197,11 +207,11 @@
 
                     <main className="max-w-6xl mx-auto px-6 py-12 md:py-24">
                         <header className="text-center mb-16 md:mb-24">
-                            <h1 className="hero-title text-6xl md:text-8xl font-black mb-8 italic">Talk to India.</h1>
-                            <p className="text-lg md:text-xl text-slate-500 max-w-2xl mx-auto leading-relaxed" dangerouslySetInnerHTML={{ __html: t.header.desc }} />
+                            <h1 className="hero-title text-6xl md:text-8xl font-black mb-8 italic text-slate-900 tracking-tighter leading-tight">Talk to India.</h1>
+                            <p className="text-lg md:text-xl text-slate-500 max-w-2xl mx-auto leading-relaxed font-medium" dangerouslySetInnerHTML={{ __html: t.header.desc }} />
                         </header>
 
-                        <section className="bg-white rounded-[3rem] shadow-2xl border border-white overflow-hidden mb-12">
+                        <section className="bg-white rounded-[3rem] shadow-2xl border border-white overflow-hidden mb-12 transition-all duration-500 hover:shadow-indigo-100/50">
                             <div className="bg-[#F8FAFC] px-8 py-6 border-b border-slate-100 flex flex-col md:flex-row justify-between items-center gap-6">
                                 <div className="flex items-center bg-white p-2 rounded-2xl border border-slate-200 gap-3 shadow-sm">
                                     <select value={sourceLang} onChange={(e)=>setSourceLang(e.target.value)} className="font-bold text-xs px-4 py-2 outline-none cursor-pointer bg-transparent">
@@ -226,7 +236,7 @@
                             <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100 min-h-[500px]">
                                 <div className="p-10 flex flex-col">
                                     <textarea 
-                                        className="flex-1 text-3xl font-black bg-transparent border-none focus:ring-0 resize-none placeholder-slate-200" 
+                                        className="flex-1 text-3xl font-black bg-transparent border-none focus:ring-0 resize-none placeholder-slate-200 text-slate-800 leading-tight" 
                                         placeholder={isListening ? t.translator.listening : t.translator.placeholder} 
                                         value={inputText} 
                                         onChange={(e)=>setInputText(e.target.value)} 
@@ -247,7 +257,7 @@
                                             {!isTranslating && <Icon name="zap" className="w-5 h-5" />}
                                         </button>
                                     </div>
-                                    {error && <div className="mt-4 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 text-xs font-bold uppercase tracking-widest">{error}</div>}
+                                    {error && <div className="mt-4 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 text-xs font-bold uppercase tracking-widest leading-relaxed">{error}</div>}
                                 </div>
                                 <div className="p-10 bg-[#F9FBFF] flex flex-col">
                                     <div className="flex justify-between items-center mb-10 text-slate-300">
@@ -258,15 +268,15 @@
                                             </button>
                                         )}
                                     </div>
-                                    <div className={`text-3xl font-black flex-1 ${outputText ? 'text-slate-900' : 'text-slate-200'}`}>
+                                    <div className={`text-3xl font-black flex-1 leading-tight ${outputText ? 'text-slate-900' : 'text-slate-200'}`}>
                                         {outputText || "Awaiting input..."}
                                     </div>
                                     {relatedContent.length > 0 && (
-                                        <div className="mt-8 p-6 bg-white rounded-2xl border border-indigo-50 shadow-sm animate-in fade-in slide-in-from-bottom-2">
+                                        <div className="mt-8 p-6 bg-white rounded-2xl border border-indigo-50 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-500">
                                             <span className="text-[10px] font-black text-indigo-300 uppercase tracking-widest block mb-4">{t.translator.related}</span>
                                             <ul className="space-y-2">
                                                 {relatedContent.map((item, idx) => (
-                                                    <li key={idx} className="text-xs font-bold text-slate-600 flex items-start gap-2">
+                                                    <li key={idx} className="text-xs font-bold text-slate-600 flex items-start gap-2 leading-relaxed">
                                                         <span className="text-indigo-500 mt-1">•</span> {item}
                                                     </li>
                                                 ))}
@@ -285,10 +295,10 @@
                         </div>
 
                         <section id="faq" className="max-w-4xl mx-auto mb-32 pt-12">
-                            <h2 className="text-4xl font-black text-center mb-16 tracking-tighter">Expert Insights & FAQ</h2>
+                            <h2 className="text-4xl font-black text-center mb-16 tracking-tighter text-indigo-950 italic">Expert Insights & FAQ</h2>
                             <div className="grid gap-8">
                                 {t.faqs.map((f, i) => (
-                                    <div key={i} className="group bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm hover:shadow-2xl transition-all duration-300">
+                                    <div key={i} className="group bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
                                         <h3 className="text-xl font-black text-indigo-900 mb-4 flex items-center gap-3">
                                             <span className="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center text-xs text-indigo-600 font-black">{i+1}</span>
                                             {f.q}
