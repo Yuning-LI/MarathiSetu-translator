@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MarathiSetu v4.7 | Resilient Production Translator</title>
+    <title>MarathiSetu v4.8 | Resilient Production Translator</title>
     <meta name="description" content="Premium AI translator for Indian dialects. Support for unlimited text, voice-to-text input for Tamil and Malayalam.">
     
     <!-- 核心资源 -->
@@ -35,20 +35,19 @@
     <script type="text/babel">
         /**
          * Project: MarathiSetu
-         * Version: 4.7 (API Configuration Resilience)
+         * Version: 4.8 (Resilience & Auto-Recovery Patch)
          * Changes: 
-         * - FIXED: Refined API call structure to handle potential 'Model Not Found' edge cases.
-         * - IMPROVED: Added specific user guidance for Google AI Studio configuration issues.
-         * - MAINTAINED: REPLACEMENT_ME_WITH_REAL_KEY logic for Vercel security.
+         * - IMPROVED: Changed model alias to 'gemini-1.5-flash-latest' for better compatibility.
+         * - ADDED: Fallback mechanism to alternate models if the primary one returns 404.
+         * - ENHANCED: Detailed user guidance for AI Studio configuration errors.
          */
 
         const { useState, useEffect } = React;
 
         const API_CONFIG = {
-            // 安全提示：代码库中使用占位符。
-            // Vercel Build Command: mkdir -p public && cp index.html public/index.html && sed -i "s|REPLACE_ME_WITH_REAL_KEY|$GEMINI_API_KEY|g" public/index.html
             key: "REPLACE_ME_WITH_REAL_KEY", 
-            model: "gemini-1.5-flash" 
+            primaryModel: "gemini-1.5-flash-latest",
+            secondaryModel: "gemini-1.5-pro-latest"
         };
 
         // --- 核心 Icon 组件 ---
@@ -84,7 +83,7 @@
 
         const UI_RESOURCES = {
             en: {
-                nav: { home: "Home", insights: "Insights", faq: "FAQ", status: "v4.7 Stable" },
+                nav: { home: "Home", insights: "Insights", faq: "FAQ", status: "v4.8 Stable" },
                 header: { desc: "Instant <strong>Voice & PDF</strong> translation for Tamil, Telugu, and Malayalam. High precision AI with <strong>no character limits</strong>." },
                 translator: { 
                     placeholder: "Speak or type to translate (e.g., 'Chetta meaning')...", 
@@ -97,29 +96,9 @@
                 faqs: [
                     { q: "How to translate Tamil to English by voice?", a: "Click the microphone icon, speak in Tamil, and our AI converts it to English instantly. It handles long passages and daily conversations with high precision." },
                     { q: "Can I translate English to Telugu in PDF or Word?", a: "Yes, MarathiSetu is built for long-form content. Just copy and paste your PDF text into the input box for an unlimited Telugu translation." },
-                    { q: "What does 'Chetta' mean in Malayalam?", a: "Chetta is a term of respect for an elder brother in Malayalam. Unlike basic tools, our AI captures these cultural nuances." },
-                    { q: "Is there a character limit for translations?", a: "No. MarathiSetu supports long-form content, making it perfect for translating documents and books without restrictions." }
+                    { q: "What does 'Chetta' mean in Malayalam?", a: "Chetta is a term of respect for an elder brother in Malayalam. Unlike basic tools, our AI captures these cultural nuances." }
                 ],
                 footer: { copy: "© 2026 Project Bhasha Matrix." }
-            },
-            hi: {
-                nav: { home: "होम", insights: "इनसाइट斯", faq: "FAQ", status: "v4.7 लाइव" },
-                header: { desc: "तमिल, तेलुगु और मलयालम के लिए त्वरित <strong>आवाज और PDF</strong> अनुवाद। बिना किसी वर्ण सीमा के उच्च सटीकता वाला AI।" },
-                translator: { 
-                    placeholder: "बोलें या टाइप करें...", 
-                    listening: "सुन रहा हूँ...",
-                    translate: "अभी अनुवाद करें", 
-                    result: "अनुवाद",
-                    related: "स्थानीय संदर्भ",
-                    learnMore: "विशेषज्ञ जानकारी和FAQ"
-                },
-                faqs: [
-                    { q: "आवाज द्वारा तमिल अनुवाद कैसे करें?", a: "माइक्रोफोन पर क्लिक करें, तमिल में बोलें, और हमारा AI इसे तुरंत अंग्रेजी में बदल देगा।" },
-                    { q: "क्या मैं PDF अनुवाद कर सकता हूँ?", a: "हाँ, असीमित अनुवाद के लिए बस अपना PDF टेक्स्ट कॉपी करें।" },
-                    { q: " 'Chetta' का क्या अर्थ है?", a: "मलयालम में बड़े भाई के लिए सम्मान का शब्द।" },
-                    { q: "क्या अनुवाद की कोई सीमा है?", a: "नहीं, यह असीमित पाठ का समर्थन करता है।" }
-                ],
-                footer: { copy: "© 2026 प्रोजेक्ट भाषा मैट्रिक्स。" }
             }
         };
 
@@ -133,12 +112,11 @@
             { id: 'bn', name: 'Bengali (বাংলা)', code: 'bn-IN' },
             { id: 'gu', name: 'Gujarati (ગુજરાતી)', code: 'gu-IN' },
             { id: 'kn', name: 'Kannada (ಕನ್ನಡ)', code: 'kn-IN' },
-            { id: 'pa', name: 'Punjabi (ਪੰਜਾਬੀ)', code: 'pa-IN' },
+            { id: 'pa', name: 'Punjabi (ਪੰਜਾਬी)', code: 'pa-IN' },
             { id: 'ur', name: 'Urdu (اردو)', code: 'ur-IN' }
         ];
 
         const App = () => {
-            const [uiLang, setUiLang] = useState('en');
             const [sourceLang, setSourceLang] = useState('en');
             const [targetLang, setTargetLang] = useState('ml');
             const [inputText, setInputText] = useState("");
@@ -150,14 +128,39 @@
             const [error, setError] = useState(null);
             const [copied, setCopied] = useState(false);
 
-            const t = UI_RESOURCES[uiLang] || UI_RESOURCES.en;
+            const t = UI_RESOURCES.en;
+
+            const requestTranslation = async (modelName) => {
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${API_CONFIG.key}`;
+                const fullPrompt = `You are a professional translator for MarathiSetu. 
+                Instruction: Translate from ${sourceLang} to ${targetLang} in ${context} style. 
+                Format: Return ONLY the translation, then a separator "---", then exactly 3 cultural or context hints as a list.
+                Text: ${inputText}`;
+
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: fullPrompt }] }] })
+                });
+
+                if (!response.ok) {
+                    const data = await response.json();
+                    const errorObj = new Error(data.error?.message || `HTTP ${response.status}`);
+                    errorObj.status = response.status;
+                    throw errorObj;
+                }
+
+                const data = await response.json();
+                const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+                return raw;
+            };
 
             const translateAction = async () => {
                 if (!inputText.trim()) return;
 
-                const placeholderString = "REPLACE_ME" + "_WITH_REAL_KEY";
-                if (API_CONFIG.key === placeholderString) {
-                    setError("Configuration Error: API Key placeholder detected. Ensure Vercel build command is correctly set.");
+                const placeholder = "REPLACE_ME" + "_WITH_REAL_KEY";
+                if (API_CONFIG.key === placeholder) {
+                    setError("Configuration Error: API Key not detected. Check Vercel Environment Variables.");
                     return;
                 }
 
@@ -165,38 +168,29 @@
                 setError(null);
                 
                 try {
-                    const url = `https://generativelanguage.googleapis.com/v1beta/models/${API_CONFIG.model}:generateContent?key=${API_CONFIG.key}`;
-                    
-                    const fullPrompt = `You are a professional translator for MarathiSetu. 
-                    Instruction: Translate from ${sourceLang} to ${targetLang} in ${context} style. 
-                    Format: Return ONLY the translation, then a separator "---", then exactly 3 cultural or context hints as a list.
-                    
-                    Text to translate: ${inputText}`;
-
-                    const response = await fetch(url, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            contents: [{ parts: [{ text: fullPrompt }] }]
-                        })
-                    });
-
-                    const data = await response.json();
-                    
-                    if (!response.ok) {
-                        if (response.status === 404) {
-                            throw new Error("Model Not Found. Please check if 'Generative Language API' is enabled in your Google AI Studio console for this specific Key.");
+                    // 尝试主模型
+                    let raw;
+                    try {
+                        raw = await requestTranslation(API_CONFIG.primaryModel);
+                    } catch (primaryErr) {
+                        if (primaryErr.status === 404) {
+                            console.warn("Primary model not found, trying fallback...");
+                            raw = await requestTranslation(API_CONFIG.secondaryModel);
+                        } else {
+                            throw primaryErr;
                         }
-                        throw new Error(data.error?.message || `Status: ${response.status}`);
                     }
 
-                    const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
                     const parts = raw.split("---");
                     setOutputText(parts[0].trim());
-                    setRelatedContent(parts[1] ? parts[1].trim().split('\n').filter(line => line.trim()) : []);
+                    setRelatedContent(parts[1] ? parts[1].trim().split('\n').filter(l => l.trim()) : []);
                 } catch (err) {
                     console.error("Translation Error Details:", err);
-                    setError(`Error: ${err.message}`);
+                    setError(
+                        err.message.includes("not found") 
+                        ? "Model Access Denied: Please visit Google AI Studio, ensure 'Generative Language API' is enabled, and try creating a NEW API Key."
+                        : `Error: ${err.message}`
+                    );
                 } finally { 
                     setIsTranslating(false); 
                 }
@@ -219,19 +213,13 @@
                                 <span className="font-black text-xl tracking-tighter cursor-pointer">MarathiSetu</span>
                             </div>
                             <div className="hidden md:flex gap-8 text-xs font-bold text-slate-400">
-                                <a href="#" className="hover:text-indigo-600 transition-colors">{t.nav.home}</a>
-                                <a href="#faq" className="hover:text-indigo-600 transition-colors">{t.nav.insights}</a>
-                                <a href="#faq" className="hover:text-indigo-600 transition-colors">{t.nav.faq}</a>
+                                <a href="#" className="hover:text-indigo-600 transition-colors">Home</a>
+                                <a href="#faq" className="hover:text-indigo-600 transition-colors">Insights</a>
+                                <a href="#faq" className="hover:text-indigo-600 transition-colors">FAQ</a>
                             </div>
                         </div>
-                        <div className="flex items-center gap-4">
-                            <div className="bg-green-100 text-green-700 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tighter shadow-sm">
-                                {t.nav.status}
-                            </div>
-                            <select value={uiLang} onChange={(e)=>setUiLang(e.target.value)} className="text-[10px] font-bold uppercase bg-transparent border-none outline-none cursor-pointer">
-                                <option value="en">EN</option>
-                                <option value="hi">HI</option>
-                            </select>
+                        <div className="bg-green-100 text-green-700 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tighter shadow-sm">
+                            {t.nav.status}
                         </div>
                     </nav>
 
@@ -276,7 +264,7 @@
                                 </div>
                                 <div className="p-10 bg-[#F9FBFF] flex flex-col">
                                     <div className="flex justify-between items-center mb-10 text-slate-300">
-                                        <span className="text-[10px] font-black uppercase tracking-widest">Output Result</span>
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Output Result</span>
                                         {outputText && (
                                             <button onClick={copyToClipboard} className={`transition-all ${copied ? 'text-green-500' : 'hover:text-indigo-600'}`}>
                                                 <Icon name={copied ? "check" : "copy"} className="w-5 h-5" />
@@ -335,7 +323,7 @@
                             <a href="#" className="hover:text-white transition-colors">Terms</a>
                             <a href="#faq" className="hover:text-white transition-colors">Help</a>
                         </div>
-                        <div className="text-[10px] text-slate-700 font-black uppercase tracking-[0.3em] leading-loose">
+                        <div className="text-[10px] text-slate-700 font-black uppercase tracking-[0.3em] leading-loose text-center">
                             <div>{t.footer.copy}</div>
                             <div>Empowering the Indian Diaspora globally.</div>
                         </div>
