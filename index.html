@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MarathiSetu v4.6 | Production Ready Translator</title>
+    <title>MarathiSetu v4.7 | Resilient Production Translator</title>
     <meta name="description" content="Premium AI translator for Indian dialects. Support for unlimited text, voice-to-text input for Tamil and Malayalam.">
     
     <!-- 核心资源 -->
@@ -35,11 +35,11 @@
     <script type="text/babel">
         /**
          * Project: MarathiSetu
-         * Version: 4.6 (API Beta Endpoint Reversion)
+         * Version: 4.7 (API Configuration Resilience)
          * Changes: 
-         * - REVERTED: API endpoint switched back to 'v1beta' to resolve model-not-found errors in v1.
-         * - MAINTAINED: Prompt merging strategy for universal compatibility.
-         * - FIXED: Cleaned up footer JSX structure to prevent Babel parsing issues.
+         * - FIXED: Refined API call structure to handle potential 'Model Not Found' edge cases.
+         * - IMPROVED: Added specific user guidance for Google AI Studio configuration issues.
+         * - MAINTAINED: REPLACEMENT_ME_WITH_REAL_KEY logic for Vercel security.
          */
 
         const { useState, useEffect } = React;
@@ -84,7 +84,7 @@
 
         const UI_RESOURCES = {
             en: {
-                nav: { home: "Home", insights: "Insights", faq: "FAQ", status: "v4.6 Stable" },
+                nav: { home: "Home", insights: "Insights", faq: "FAQ", status: "v4.7 Stable" },
                 header: { desc: "Instant <strong>Voice & PDF</strong> translation for Tamil, Telugu, and Malayalam. High precision AI with <strong>no character limits</strong>." },
                 translator: { 
                     placeholder: "Speak or type to translate (e.g., 'Chetta meaning')...", 
@@ -103,7 +103,7 @@
                 footer: { copy: "© 2026 Project Bhasha Matrix." }
             },
             hi: {
-                nav: { home: "होम", insights: "इनसाइट斯", faq: "FAQ", status: "v4.6 लाइव" },
+                nav: { home: "होम", insights: "इनसाइट斯", faq: "FAQ", status: "v4.7 लाइव" },
                 header: { desc: "तमिल, तेलुगु और मलयालम के लिए त्वरित <strong>आवाज और PDF</strong> अनुवाद। बिना किसी वर्ण सीमा के उच्च सटीकता वाला AI।" },
                 translator: { 
                     placeholder: "बोलें या टाइप करें...", 
@@ -165,7 +165,6 @@
                 setError(null);
                 
                 try {
-                    // 核心修复点：将 API 路径切回到 v1beta，因为它对模型的识别最全
                     const url = `https://generativelanguage.googleapis.com/v1beta/models/${API_CONFIG.model}:generateContent?key=${API_CONFIG.key}`;
                     
                     const fullPrompt = `You are a professional translator for MarathiSetu. 
@@ -178,14 +177,16 @@
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            contents: [{ 
-                                parts: [{ text: fullPrompt }] 
-                            }]
+                            contents: [{ parts: [{ text: fullPrompt }] }]
                         })
                     });
 
                     const data = await response.json();
+                    
                     if (!response.ok) {
+                        if (response.status === 404) {
+                            throw new Error("Model Not Found. Please check if 'Generative Language API' is enabled in your Google AI Studio console for this specific Key.");
+                        }
                         throw new Error(data.error?.message || `Status: ${response.status}`);
                     }
 
