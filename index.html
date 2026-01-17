@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MarathiSetu v4.4 | Resilient Production Translator</title>
+    <title>MarathiSetu v4.5 | Stable Production Translator</title>
     <meta name="description" content="Premium AI translator for Indian dialects. Support for unlimited text, voice-to-text input for Tamil and Malayalam.">
     
     <!-- 核心资源 -->
@@ -35,10 +35,10 @@
     <script type="text/babel">
         /**
          * Project: MarathiSetu
-         * Version: 4.4 (Compatibility Maxima)
+         * Version: 4.5 (Production Endpoint Fix)
          * Changes: 
-         * - FIXED: Removed the problematic 'system_instruction' field to avoid API schema errors.
-         * - IMPROVED: Merged translation instructions directly into the content prompt for universal compatibility.
+         * - FIXED: Switched API endpoint from 'v1beta' to 'v1' to resolve Model Not Found error.
+         * - MAINTAINED: Merged prompt strategy for maximum compatibility with stable API.
          * - MAINTAINED: REPLACE_ME_WITH_REAL_KEY placeholder logic.
          */
 
@@ -84,7 +84,7 @@
 
         const UI_RESOURCES = {
             en: {
-                nav: { home: "Home", insights: "Insights", faq: "FAQ", status: "v4.4 Stable" },
+                nav: { home: "Home", insights: "Insights", faq: "FAQ", status: "v4.5 Stable" },
                 header: { desc: "Instant <strong>Voice & PDF</strong> translation for Tamil, Telugu, and Malayalam. High precision AI with <strong>no character limits</strong>." },
                 translator: { 
                     placeholder: "Speak or type to translate (e.g., 'Chetta meaning')...", 
@@ -103,7 +103,7 @@
                 footer: { copy: "© 2026 Project Bhasha Matrix. Data-driven Voice AI." }
             },
             hi: {
-                nav: { home: "होम", insights: "इनसाइट्स", faq: "FAQ", status: "v4.4 लाइव" },
+                nav: { home: "होम", insights: "इनसाइट斯", faq: "FAQ", status: "v4.5 लाइव" },
                 header: { desc: "तमिल, तेलुगु और मलयालम के लिए त्वरित <strong>आवाज और PDF</strong> अनुवाद। बिना किसी वर्ण सीमा के उच्च सटीकता वाला AI।" },
                 translator: { 
                     placeholder: "बोलें या टाइप करें...", 
@@ -111,7 +111,7 @@
                     translate: "अभी अनुवाद करें", 
                     result: "अनुवाद",
                     related: "स्थानीय संदर्भ",
-                    learnMore: "विशेषज्ञ जानकारी和FAQ"
+                    learnMore: "विशेषज्ञ जानकारी और FAQ"
                 },
                 faqs: [
                     { q: "आवाज द्वारा तमिल अनुवाद कैसे करें?", a: "माइक्रोफोन पर क्लिक करें, तमिल में बोलें, और हमारा AI इसे तुरंत अंग्रेजी में बदल देगा।" },
@@ -165,10 +165,9 @@
                 setError(null);
                 
                 try {
-                    // 使用 v1beta 路径，因为它更灵活
-                    const url = `https://generativelanguage.googleapis.com/v1beta/models/${API_CONFIG.model}:generateContent?key=${API_CONFIG.key}`;
+                    // 核心修复点：使用 v1 正式版接口
+                    const url = `https://generativelanguage.googleapis.com/v1/models/${API_CONFIG.model}:generateContent?key=${API_CONFIG.key}`;
                     
-                    // 核心修复点：将指令合并到主 prompt 中，避免使用 system_instruction 字段
                     const fullPrompt = `You are a professional translator for MarathiSetu. 
                     Instruction: Translate from ${sourceLang} to ${targetLang} in ${context} style. 
                     Format: Return ONLY the translation, then a separator "---", then exactly 3 cultural or context hints as a list.
