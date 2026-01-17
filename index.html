@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MarathiSetu v3.8 | Secure Production Translator</title>
+    <title>MarathiSetu v3.9 | Secure Production Translator</title>
     <meta name="description" content="Premium AI translator for Indian dialects. High-speed voice and PDF translation for Tamil, Malayalam, Telugu, and more with no character limits.">
     
     <!-- 核心资源 -->
@@ -35,10 +35,10 @@
     <script type="text/babel">
         /**
          * Project: MarathiSetu
-         * Version: 3.8 (Robust Deployment Patch)
+         * Version: 3.9 (Logic Bypass Fix)
          * Changes: 
-         * - Refined placeholders and instructions for Vercel.
-         * - Improved build command for characters compatibility.
+         * - FIXED: Changed placeholder check logic to prevent 'sed' from overwriting the 'if' condition.
+         * - This ensures that if the key is replaced, the security error won't trigger falsely.
          */
 
         const { useState, useEffect } = React;
@@ -46,7 +46,7 @@
         // --- 生产环境 API 配置 ---
         const API_CONFIG = {
             // 安全提示：代码库中使用占位符。
-            // 建议 Vercel Build Command 使用: 
+            // Vercel Build Command 应保持为: 
             // mkdir -p public && cp index.html public/index.html && sed -i "s|REPLACE_ME_WITH_REAL_KEY|$GEMINI_API_KEY|g" public/index.html
             key: "REPLACE_ME_WITH_REAL_KEY", 
             model: "gemini-2.5-flash-preview-09-2025"
@@ -94,7 +94,7 @@
 
         const UI_RESOURCES = {
             en: {
-                nav: { home: "Home", insights: "Insights", faq: "FAQ", status: "v3.8 Secure" },
+                nav: { home: "Home", insights: "Insights", faq: "FAQ", status: "v3.9 Secure" },
                 header: { desc: "Instant <strong>Voice & PDF</strong> translation for Tamil, Telugu, and Malayalam. High precision AI with <strong>no character limits</strong>." },
                 translator: { 
                     placeholder: "Speak or type to translate (e.g., 'Chetta meaning')...", 
@@ -145,8 +145,9 @@
             const translateAction = async () => {
                 if (!inputText.trim()) return;
 
-                // 检查是否由于配置错误导致占位符未被替换
-                if (API_CONFIG.key === "REPLACE_ME_WITH_REAL_KEY") {
+                // 核心修复：使用字符串拼接，防止 sed 命令在构建时替换此检查逻辑
+                const placeholder = "REPLACE_ME" + "_WITH_REAL_KEY";
+                if (API_CONFIG.key === placeholder) {
                     setError("Security Error: API Key placeholder detected. Please check your Vercel Build Command settings.");
                     return;
                 }
@@ -194,7 +195,7 @@
                                 <div className="bg-indigo-600 p-2 rounded-xl text-white shadow-lg">
                                     <IndianTranslateLogo size={24} />
                                 </div>
-                                <span className="font-black text-xl tracking-tighter">MarathiSetu</span>
+                                <span className="font-black text-xl tracking-tighter cursor-pointer">MarathiSetu</span>
                             </div>
                             <div className="hidden md:flex gap-8 text-xs font-bold text-slate-400">
                                 <a href="#" className="hover:text-indigo-600 transition-colors">Home</a>
