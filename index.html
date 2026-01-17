@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MarathiSetu v4.0 | Professional Global Translator</title>
+    <title>MarathiSetu v4.1 | Stable Production Translator</title>
     <meta name="description" content="Premium AI translator for Indian dialects. High-speed voice and PDF translation for Tamil, Malayalam, Telugu, and more with no character limits.">
     
     <!-- 核心资源 -->
@@ -35,10 +35,10 @@
     <script type="text/babel">
         /**
          * Project: MarathiSetu
-         * Version: 4.0 (Advanced Debugging & Model Update)
+         * Version: 4.1 (API Endpoint Fix)
          * Changes: 
-         * - FIXED: Changed model to 'gemini-1.5-flash' for wider production compatibility.
-         * - IMPROVED: Enhanced error reporting to show actual API error messages.
+         * - FIXED: Changed API endpoint from v1beta to v1 to resolve 404 (Model Not Found) errors.
+         * - IMPROVED: Refined error message extraction for faster debugging.
          * - MAINTAINED: REPLACE_ME_WITH_REAL_KEY placeholder logic.
          */
 
@@ -50,7 +50,7 @@
             // Vercel Build Command: 
             // mkdir -p public && cp index.html public/index.html && sed -i "s|REPLACE_ME_WITH_REAL_KEY|$GEMINI_API_KEY|g" public/index.html
             key: "REPLACE_ME_WITH_REAL_KEY", 
-            model: "gemini-1.5-flash" // 改为更稳定的 1.5 系列
+            model: "gemini-1.5-flash" 
         };
 
         // --- 核心 Icon 组件 ---
@@ -95,7 +95,7 @@
 
         const UI_RESOURCES = {
             en: {
-                nav: { home: "Home", insights: "Insights", faq: "FAQ", status: "v4.0 Live" },
+                nav: { home: "Home", insights: "Insights", faq: "FAQ", status: "v4.1 Live" },
                 header: { desc: "Instant <strong>Voice & PDF</strong> translation for Tamil, Telugu, and Malayalam. High precision AI with <strong>no character limits</strong>." },
                 translator: { 
                     placeholder: "Speak or type to translate (e.g., 'Chetta meaning')...", 
@@ -156,7 +156,8 @@
                 setError(null);
                 
                 try {
-                    const url = `https://generativelanguage.googleapis.com/v1beta/models/${API_CONFIG.model}:generateContent?key=${API_CONFIG.key}`;
+                    // 修正点：将 v1beta 改为 v1
+                    const url = `https://generativelanguage.googleapis.com/v1/models/${API_CONFIG.model}:generateContent?key=${API_CONFIG.key}`;
                     const response = await fetch(url, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -169,8 +170,10 @@
                     const data = await response.json();
                     
                     if (!response.ok) {
-                        // 抛出具体的 API 错误信息
-                        throw new Error(data.error?.message || `HTTP error! status: ${response.status}`);
+                        // 提取更详细的错误原因
+                        const errorMsg = data.error?.message || `Status: ${response.status}`;
+                        const errorReason = data.error?.status || "Unknown";
+                        throw new Error(`${errorMsg} (${errorReason})`);
                     }
                     
                     const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
@@ -214,7 +217,7 @@
 
                     <main className="max-w-6xl mx-auto px-6 py-12 md:py-24">
                         <header className="text-center mb-16 md:mb-24">
-                            <h1 className="hero-title text-6xl md:text-8xl font-black mb-8 italic text-slate-900 tracking-tighter leading-tight">Talk to India.</h1>
+                            <h1 className="hero-title text-6xl md:text-8xl font-black mb-8 italic text-slate-900 tracking-tighter leading-tight text-center">Talk to India.</h1>
                             <p className="text-lg md:text-xl text-slate-500 max-w-2xl mx-auto leading-relaxed font-medium" dangerouslySetInnerHTML={{ __html: t.header.desc }} />
                         </header>
 
@@ -307,7 +310,7 @@
 
                         <section id="faq" className="max-w-4xl mx-auto mb-32 pt-12">
                             <h2 className="text-4xl font-black text-center mb-16 tracking-tighter text-indigo-950 italic">Expert Insights & FAQ</h2>
-                            <div className="grid gap-8">
+                            <div className="grid gap-8 text-slate-900">
                                 {t.faqs.map((f, i) => (
                                     <div key={i} className="group bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
                                         <h3 className="text-xl font-black text-indigo-900 mb-4 flex items-center gap-3">
